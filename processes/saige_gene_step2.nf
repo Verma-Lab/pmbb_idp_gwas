@@ -54,8 +54,10 @@ process call_saige_gene_step2_bin {
          --maxMAF_in_groupTest="${params.grouptest_maf}" \
          --annotation_in_groupTest="${params.grouptest_annotation}" \
          --groupFile=${chr_group_file} \
-         --is_Firth_beta=${params.use_firth} \
+         --is_Firth_beta=${params.use_firth ? 'TRUE' : 'FALSE'} \
          --pCutoffforFirth=${params.firth_cutoff} \
+         --r.corr=${params.burden_only ? 1 : 0} \
+         --is_no_weight_in_groupTest=${params.use_weighted_group_test ? 'FALSE' : 'TRUE'} \
          --LOCO=${params.LOCO} \
          --is_output_moreDetails=TRUE \
          --is_output_markerList_in_groupTest=TRUE \
@@ -104,6 +106,8 @@ process call_saige_gene_step2_quant {
          --annotation_in_groupTest="${params.grouptest_annotation}" \
          --groupFile=${chr_group_file} \
          --SAIGEOutputFile=${cohort_dir}.${pheno}.${chr} \
+         --r.corr=${params.burden_only ? 1 : 0} \
+         --is_no_weight_in_groupTest=${params.use_weighted_group_test ? 'FALSE' : 'TRUE'} \
          --LOCO=${params.LOCO} \
          --is_output_moreDetails=TRUE \
          --is_output_markerList_in_groupTest=TRUE \
@@ -153,8 +157,10 @@ process call_saige_gene_step2_bin_with_sparse_GRM {
          --maxMAF_in_groupTest="${params.grouptest_maf}" \
          --annotation_in_groupTest="${params.grouptest_annotation}" \
          --groupFile=${chr_group_file} \
-         --is_Firth_beta=${params.use_firth} \
+         --is_Firth_beta=${params.use_firth ? 'TRUE' : 'FALSE'} \
          --pCutoffforFirth=${params.firth_cutoff} \
+         --r.corr=${params.burden_only ? 1 : 0} \
+         --is_no_weight_in_groupTest=${params.use_weighted_group_test ? 'FALSE' : 'TRUE'} \
          --LOCO=${params.LOCO} \
          --is_output_moreDetails=TRUE \
          --is_output_markerList_in_groupTest=TRUE \
@@ -206,6 +212,8 @@ process call_saige_gene_step2_quant_with_sparse_GRM {
         --annotation_in_groupTest="${params.grouptest_annotation}" \
         --groupFile=${chr_group_file} \
         --SAIGEOutputFile=${cohort_dir}.${pheno}.${chr} \
+        --r.corr=${params.burden_only ? 1 : 0} \
+        --is_no_weight_in_groupTest=${params.use_weighted_group_test ? 'FALSE' : 'TRUE'} \
         --LOCO=${params.LOCO} \
         --is_output_moreDetails=TRUE \
         --is_output_markerList_in_groupTest=TRUE \

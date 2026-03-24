@@ -7,7 +7,7 @@ process set_up_cohort {
         path pheno_covar_table
         path cohort_table
         path(step1_fam, stageAs: 'Plink_QC/*')
-        path(step2_fam, stageAs: 'Exome/*')
+        path(step2_fam, stageAs: 'Step2/*')
     output:
         tuple val(cohort), path('sample_list.txt')
         tuple val(cohort), path('saige_pheno_covars.txt')
@@ -28,36 +28,6 @@ process set_up_cohort {
         '''
 }
 
-/*
-process set_up_cohort_gwas_plink {
-    publishDir "${launchDir}/${cohort}/"
-    input:
-        val cohort
-        path cohort_script
-        path pheno_covar_table
-        path cohort_table
-        path(step1_fam, stageAs: 'Plink_QC/*')
-        path(step2_fam, stageAs: 'Step2Fam/*')
-    output:
-        tuple val(cohort), path('sample_list.txt')
-        tuple val(cohort), path('saige_pheno_covars.txt')
-    shell:
-        """
-        ${params.my_python} ${cohort_script} \
-          --data ${pheno_covar_table} \
-          --cohort ${cohort} \
-          --samples ${cohort_table} \
-          --step1Fam ${step1_fam} \
-          --step2Fam ${step2_fam} \
-          --id ${params.id_col}
-        """
-    stub:
-        '''
-        touch sample_list.txt
-        touch saige_pheno_covars.txt
-        '''
-}
-*/
 
 process set_up_cohort_gwas_bgen {
     publishDir "${launchDir}/${cohort}/"
@@ -291,6 +261,8 @@ workflow SAIGE_PREPROCESSING {
                 pheno_covar_table, cohort_table,
                 pheno_covar_plots_script
                 )
+        } else {
+            pheno_plots = Channel.empty()
         }
 
         // parse the pheno-cohort summary table
@@ -369,5 +341,6 @@ workflow SAIGE_PREPROCESSING {
         pheno_table
         cohort_sample_lists
         cohort_pheno_tables
+        pheno_plots
 }
 //numGPU

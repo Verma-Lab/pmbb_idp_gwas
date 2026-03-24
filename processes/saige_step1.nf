@@ -248,63 +248,6 @@ String get_covar_list_args(String cohort, cohort_cat_covars, cohort_cont_covars)
     return output
 }
 
-/*
-process call_saige_step1_bin {
-    publishDir "${launchDir}/${cohort}/Saige_Step1/", enabled: {params.host != 'AOU'}
-
-    label(params.GPU == 'ON' ? 'gpu_on' : 'gpu_off')
-
-    errorStrategy 'retry'
-
-    input:
-        // variables
-        tuple val(cohort), val(pheno), path(plink_set), path(samples), path(pheno_file)
-    output:
-        // variables
-        tuple val(cohort), val(pheno), path("${pheno}.rda"), path("${pheno}.varianceRatio.txt")
-        path "${pheno}.log"
-    shell:
-        covariate_args = get_covar_list_args(cohort,
-            params.sex_strat_cohort_list.contains(cohort) ? params.sex_strat_cat_covars : params.cat_covars,
-            params.sex_strat_cohort_list.contains(cohort) ? params.sex_strat_cont_covars : params.cont_covars)
-        """
-        if [ "${params.GPU}"  = "ON" ]; then
-            mpirun -n 8 singularity exec --bind /path/to/data/ --nv \
-            saige-doe-3.sif \
-            /opt/conda/lib/R/bin/Rscript /SAIGE_container/SAIGE-DOE/extdata/step1_fitNULLGLMM.R  \
-            --plinkFile=step1_plink \
-            --phenoFile=${pheno_file} \
-            --phenoCol=${pheno} \
-            ${covariate_args} \
-            --sampleIDColinphenoFile=${params.id_col} \
-            --traitType=binary \
-            --outputPrefix=${pheno} \
-            --nThreads=1 \
-            --IsOverwriteVarianceRatioFile=TRUE > ${pheno}.log
-        elif [ "${params.GPU}" = "OFF" ]; then
-            echo "${cohort}-${pheno}"
-            stdbuf -e0 -o0 Rscript ${params.step1_script} \
-            --plinkFile=step1_plink \
-            --phenoFile=${pheno_file} \
-            --phenoCol=${pheno} \
-            ${covariate_args} \
-            --sampleIDColinphenoFile=${params.id_col} \
-            --traitType=binary \
-            --outputPrefix=${pheno} \
-            --nThreads=29 \
-            --IsOverwriteVarianceRatioFile=TRUE > ${pheno}.log
-        fi
-
-        """
-    stub:
-        """
-        touch ${pheno}.rda
-        touch ${pheno}.varianceRatio.txt
-        touch ${pheno}.log
-        """
-}
-*/
-
 process dnanexus_skip_plink_qc_for_step1 {
     input:
         // variables

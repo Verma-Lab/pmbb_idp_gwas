@@ -38,10 +38,11 @@ process make_saige_gwas_plots {
     publishDir "${launchDir}/Plots/"
     label 'safe_to_skip', 'high_memory_plots'
     // needs dynamic memory {} allocation
+    // Peak memory ~ compressed_size * 10 (uncompressed) + 4GB overhead for plotting.
     memory {
         def fileSizeGb = sumstats.size() / (1024**3)
         def max_mem_gb = 256
-        def requiredMemGb = Math.max(8, Math.ceil(fileSizeGb * 10))
+        def requiredMemGb = Math.max(16, (Math.ceil(fileSizeGb * 20) + 4).toLong())
         def attempt_mem = Math.min(requiredMemGb, max_mem_gb)
         return attempt_mem.GB
     }
@@ -77,7 +78,7 @@ process make_gwas_plots_with_annot {
     memory {
         def fileSizeGb = sumstats.size() / (1024**3)
         def max_mem_gb = 256
-        def requiredMemGb = Math.max(8, Math.ceil(fileSizeGb * 10))
+        def requiredMemGb = Math.max(16, (Math.ceil(fileSizeGb * 20) + 4).toLong())
         def attempt_mem = Math.min(requiredMemGb, max_mem_gb)
         return attempt_mem.GB
     }
@@ -113,7 +114,7 @@ process make_saige_variant_phewas_plots {
     memory {
         def fileSizeGb = singles_outputs.size() / (1024**3)
         def max_mem_gb = 256
-        def requiredMemGb = Math.max(8, Math.ceil(fileSizeGb * 10))
+        def requiredMemGb = Math.max(16, (Math.ceil(fileSizeGb * 20) + 4).toLong())
         def attempt_mem = Math.min(requiredMemGb, max_mem_gb)
         return attempt_mem.GB
     }
@@ -145,7 +146,7 @@ process make_saige_exwas_singles_plots {
     memory {
         def fileSizeGb = singles_sumstats.size() / (1024**3)
         def max_mem_gb = 256
-        def requiredMemGb = Math.max(8, Math.ceil(fileSizeGb * 10))
+        def requiredMemGb = Math.max(16, (Math.ceil(fileSizeGb * 20) + 4).toLong())
         def attempt_mem = Math.min(requiredMemGb, max_mem_gb)
         return attempt_mem.GB
     }
@@ -184,7 +185,7 @@ process make_saige_exwas_regions_plots {
     memory {
         def fileSizeGb = regions_sumstats.size() / (1024**3)
         def max_mem_gb = 256
-        def requiredMemGb = Math.max(8, Math.ceil(fileSizeGb * 10))
+        def requiredMemGb = Math.max(16, (Math.ceil(fileSizeGb * 20) + 4).toLong())
         def attempt_mem = Math.min(requiredMemGb, max_mem_gb)
         return attempt_mem.GB
     }
@@ -376,15 +377,14 @@ process collect_exwas_singles_plots {
         """
         #! ${params.my_python}
 
-        import pandas as pd
-        dfs = []
-        input_list = [x.strip() for x in "${plots_manifests}".replace('[', '').replace(']', '').split()]
+        input_list = [x.strip() for x in "${plots_manifests}".replace('[', '').replace(']', '').split()
+                      if 'manifest.csv' in x.strip()]
         output_file = "${saige_analysis}.plots_manifest.csv"
 
-        for file_path in input_list:
-            dfs.append(pd.read_csv(file_path))
-
-        pd.concat(dfs,ignore_index=True).to_csv(output_file, index=False)
+        with open(output_file, 'w') as f:
+            f.write('filename\\n')
+            for file_path in input_list:
+                f.write(file_path + '\\n')
         """
 
     stub:
@@ -405,21 +405,77 @@ process collect_gwas_plots {
         """
         #! ${params.my_python}
 
-        import pandas as pd
-        dfs = []
-        input_list = [x.strip() for x in "${plots_manifests}".replace('[', '').replace(']', '').split()]
+        input_list = [x.strip() for x in "${plots_manifests}".replace('[', '').replace(']', '').split()
+                      if 'manifest.csv' in x.strip()]
         output_file = "${saige_analysis}.plots_manifest.csv"
 
-        for file_path in input_list:
-            dfs.append(pd.read_csv(file_path))
-
-        pd.concat(dfs,ignore_index=True).to_csv(output_file, index=False)
+        with open(output_file, 'w') as f:
+            f.write('filename\\n')
+            for file_path in input_list:
+                f.write(file_path + '\\n')
         """
 
     stub:
         """
         touch ${saige_analysis}.plots_manifest.csv
         """
+}
+
+process make_gwas_report_src {
+    publishDir "${launchDir}/Report/", mode: 'copy', overwrite: true
+    input:
+        path gwas_plots
+        path pheno_summary_plots
+        path pheno_summary_table
+        path gwas_summary
+    output:
+        path('src/', type: 'dir')
+    shell:
+        """
+        mkdir src/
+
+        for f in \$(echo "${gwas_plots}" | sed 's|,||g' | sed 's|\\[||g' | sed 's|\\]||g')
+        do
+          cp \$f src/
+        done
+
+        for f in \$(echo "${pheno_summary_plots}" | sed 's|,||g' | sed 's|\\[||g' | sed 's|\\]||g')
+        do
+          cp \$f src/
+        done
+
+        cp ${pheno_summary_table} src/
+        cp ${gwas_summary} src/
+        """
+    stub:
+        '''
+        mkdir src
+        touch src/test.png
+        touch src/test.csv
+        '''
+}
+
+process make_gwas_report {
+    publishDir "${launchDir}/Report/", mode: 'copy', overwrite: true
+    input:
+        path report_source_dir
+        path generate_html_script
+    output:
+        path('index.html')
+        path('*.html')
+    shell:
+        """
+        echo "${params.gwas_col_names.collect().join('\n')}" > gwas_colnames.txt
+        ${params.my_python} ${generate_html_script} \
+          -p ${params.bin_pheno_list.join(' ') + ' ' + params.quant_pheno_list.join(' ')} \
+          -c ${params.cohort_list.join(' ')} \
+          --pval ${params.p_cutoff_summarize} \
+          --gwasColnames gwas_colnames.txt
+        """
+    stub:
+        '''
+        touch index.html
+        '''
 }
 
 process collect_gene_phewas_regions_plots {

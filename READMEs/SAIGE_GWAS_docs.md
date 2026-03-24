@@ -138,6 +138,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
 
 * SAIGE Sparse GRM Sample IDs
 
+    * `step1_sparse_grm_samples` (Type: File Path)
+
     * (optional) sample IDs for a sparse relatedness matrix
 
     * Type: List File
@@ -161,6 +163,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
     ```
 
 * Cohort Membership
+
+    * `cohort_sets` (Type: File Path)
 
     * 0/1 table with cohorts as columns and participants as rows - 1 indicates that that row’s participant is a member of that column’s cohort
 
@@ -187,6 +191,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
 
 * SAIGE Step 1 Plink Files
 
+    * `step1_plink_prefix` (Type: Plink Fileset Prefix)
+
     * a hard-call plink set to use for step 1 (usually also exome or genotype files)
 
     * Type: Plink Set
@@ -201,6 +207,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
     ```
 
 * Phenotypes and Covariates
+
+    * `data_csv` (Type: File Path)
 
     * table with participants as rows and all needed phenotypes and covariates as columns
 
@@ -232,6 +240,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
 
 * SAIGE Step 2 Plink Files
 
+    * `step2_plink_prefix` (Type: File Path)
+
     * This is a set of chromosome-separated hard-call Plink Files for step 2 of SAIGE. The prefix should be indicated such that the chromosome and bed/bim/fam can be appended for each individual file.
 
     * Type: Plink Set
@@ -246,6 +256,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
     ```
 
 * SAIGE Sparse GRM
+
+    * `step1_sparse_grm` (Type: File Path)
 
     * (optional) a sparse relatedness matrix for faster step 1 computation
 
@@ -262,11 +274,15 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
 
 * SAIGE Step 2 BGEN Files
 
+    * `step2_bgen_prefix` (Type: File Path)
+
     * Type: BGEN/Sample Set
 
     * Format: bgen
 
 * Sex Specific Phenotype List
+
+    * `sex_specific_pheno_file` (Type: File Path)
 
     * A newline-separated list of phenotypes that should be excluded from non-sex-stratified cohorts (e.g., include in AFR_F or AFR_M but exclude from AFR_ALL). Set to 
 
@@ -295,6 +311,26 @@ _No output files defined for this module._
 * `biofilter_close_dist` (Type: Float)
 
     * The distance in bp for something to be considered “close” vs “far” with respect to nearest gene annotation. Value is often 5E4
+
+* `biofilter_script` (Type: File Path)
+
+    * The path to the biofilter script to use. If using the singularity container, should be ‘/app/biofilter.py’
+
+* `biofilter_build` (Type: String)
+
+    * The build to pass to biofilter - can be 19 or 38
+
+* `p_cutoff_summarize` (Type: Float)
+
+    * P-Value Threshold for Summarizing Results at the End, arbitrary p-value threshold for creating a table of results combined with low p-values 
+
+* `biofilter_loki` (Type: File Path)
+
+    * The path to a loki.db file to be used for nearest gene annotation
+
+* `annotate` (Type: Bool (Java: true or false))
+
+    * Whether or not to annotate results with the RSIDs and nearest genes for plotting and summary files.
 ### Pre-Processing
 
 
@@ -333,6 +369,51 @@ _No output files defined for this module._
         1a8,0.0162938047248591,0,0.943836210685299,0,0,0,0,0,0,0,0,0,1,1
         1a9,0.147167262428064,0,0.821221195098089,1,0,0,0,0,0,0,0,0,1,0
         ```
+
+* `cohort_sets` (Type: File Path)
+
+    * A binary csv table in which the columns are the cohorts and the rows are the individuals. A 1 means that individual is a member of the column’s cohort, and a 0 means they aren’t.
+
+    * Corresponding Input File: Cohort Membership
+
+        * 0/1 table with cohorts as columns and participants as rows - 1 indicates that that row’s participant is a member of that column’s cohort
+
+        * Type: Data Table
+
+        * Format: csv
+
+        * File Header:
+
+
+        ```
+        IID,POP1,POP2,POP3
+        1a1,1,0,1
+        1a2,1,0,0
+        1a3,0,0,0
+        1a4,1,0,0
+        1a5,1,0,0
+        1a6,1,1,0
+        1a7,0,0,0
+        1a8,1,0,1
+        1a9,0,1,1
+        
+        ```
+
+* `min_quant_n` (Type: Float)
+
+    * For case-control filtering, the minimum number of QUANTITATIVE phenotypes you want to keep. Phenotypes with less than this number per cohort will be dropped (Default: 50 if not specified). 
+
+* `sex_specific_pheno_file` (Type: File Path)
+
+    * A newline-separated list of phenotypes that should only be included in sex-stratified cohorts (e.g., AFR_F but not AFR_ALL).  Can be safely left as null (defaults to an empty List)
+
+    * Corresponding Input File: Sex Specific Phenotype List
+
+        * A newline-separated list of phenotypes that should be excluded from non-sex-stratified cohorts (e.g., include in AFR_F or AFR_M but exclude from AFR_ALL). Set to 
+
+        * Type: List File
+
+        * Format: txt
 ### SAIGE Step 1
 
 
@@ -354,12 +435,96 @@ _No output files defined for this module._
         ```
         nfam_100_nindep_0_step1_includeMoreRareVariants_poly_22chr.{bed,bim,fam}
         ```
+
+* `step1_sparse_grm_samples` (Type: File Path)
+
+    * List of IDs to use in the sparse GRM 
+
+    * Corresponding Input File: SAIGE Sparse GRM Sample IDs
+
+        * (optional) sample IDs for a sparse relatedness matrix
+
+        * Type: List File
+
+        * Format: txt
+
+        * File Header:
+
+
+        ```
+        1a1
+        1a2
+        1a3
+        1a4
+        1a5
+        1a6
+        1a7
+        1a8
+        1a9
+        1a10
+        ```
+
+* `step1_sparse_grm` (Type: File Path)
+
+    * File Path to precomputed Sparse GRM
+
+    * Corresponding Input File: SAIGE Sparse GRM
+
+        * (optional) a sparse relatedness matrix for faster step 1 computation
+
+        * Type: GRM
+
+        * Format: R sparse matrix
+
+        * File Header:
+
+
+        ```
+        sparseGRM_relatednessCutoff_0.125_2000_randomMarkersUsed.sparseGRM.mtx
+        ```
 ### SAIGE Step 2
 
+
+* `step2_plink_prefix` (Type: File Path)
+
+    * Prefix of File Path used for SAIGE Step2
+
+    * Corresponding Input File: SAIGE Step 2 Plink Files
+
+        * This is a set of chromosome-separated hard-call Plink Files for step 2 of SAIGE. The prefix should be indicated such that the chromosome and bed/bim/fam can be appended for each individual file.
+
+        * Type: Plink Set
+
+        * Format: plink binary
+
+        * File Header:
+
+
+        ```
+        genotype_100markers_2chr.chr1.{bed,bim,fam}
+        ```
+
+* `step2_bgen_prefix` (Type: File Path)
+
+    * Prefix of File Path used for SAIGE Step2 
+
+    * Corresponding Input File: SAIGE Step 2 BGEN Files
+
+        * Type: BGEN/Sample Set
+
+        * Format: bgen
 
 * `use_firth` (Type: Bool (R: TRUE or FALSE))
 
     * True to use firth logistic regression
+
+* `ftype` (Type: String)
+
+    * “PLINK” or “BGEN” based on input type for steps 1 & 2 
+
+* `step2_script` (Type: File Path)
+
+    * Performs region or gene-based association tests    
 ### Workflow
 
 
@@ -374,6 +539,18 @@ _No output files defined for this module._
 * `bin_pheno_list` (Type: List OR File Path)
 
     * file path to list of binary phenotypes
+
+* `quant_pheno_list` (Type: List)
+
+    * Quantitative phenotype list
+
+* `cohort_list` (Type: List)
+
+    * List of cohorts usually ancestry stratified and or sex stratified
+
+* `chromosome_list` (Type: List)
+
+    * This list is used primarily for parallelization of the workflow. List of chromosomes, for testing use smaller chromosomes e.g chromosome_list = ["20", "21", "22"]
 # Configuration and Advanced Workflow Files
 
 ## Example Config File Contents (From Path)

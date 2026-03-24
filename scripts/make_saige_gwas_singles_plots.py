@@ -100,6 +100,8 @@ mp.qq_plot(save=output_qq)
 
 print(f"Saved qq plot to: {output_qq}")
 
+del mp
+
 # plotting manifest
 def plots_filename(row):
     manhattan_file = f'Plots/{output_manhattan}'

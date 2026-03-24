@@ -7,62 +7,10 @@ params.host = ""
 params.max_vars_for_GRM = null
 params.pruning_r2_for_GRM = null
 params.min_rare_vars_for_GRM = '300'
-
-log.info """\
-    NEXTFLOW - DSL2 - SAIGE ExWAS - P I P E L I N E
-    ==================================================
-    run as                  : ${workflow.commandLine}
-    run location            : ${launchDir}
-    started at              : ${workflow.start}
-    python exe              : ${params.my_python}
-
-    Cohorts, Phenotypes, and Chromosomes
-    ==================================================
-    cohort_list             : ${params.cohort_list}
-    sex-stratified_cohorts  : ${params.sex_strat_cohort_list}
-    bin_pheno_list          : ${params.bin_pheno_list}
-    quant_pheno_list        : ${params.quant_pheno_list}
-    gene_list_file          : ${params.gene_list_file}
-    chromosome_list         : ${params.chromosome_list}
-    cat_covars              : ${params.cat_covars}
-    cont_covars             : ${params.cont_covars}
-    data_csv                : ${params.data_csv}
-    cohort_sets             : ${params.cohort_sets}
-    sex_specific_pheno_file : ${params.sex_specific_pheno_file}
-
-    Input File Prefixes
-    ==================================================
-    step1_sparse_grm        : ${params.step1_sparse_grm}
-    step1_sparse_grm_samples: ${params.step1_sparse_grm_samples}
-
-    exome_plink_prefix      : ${params.exome_plink_prefix}
-    group_file_prefix       : ${params.group_file_prefix}
-    gene_location_file      : ${params.gene_location_file}
-
-    SAIGE Step 1 Plink QC Parameters
-    ==================================================
-    min maf (maf)           : ${params.maf}
-    max missingness (geno)  : ${params.geno}
-    hardy-weinberg (hwe)    : ${params.hwe}
-
-    SAIGE-GENE Parameters
-    ==================================================
-    minMAF                  : ${params.min_maf}
-    minMAC                  : ${params.min_mac}
-    maxMAF_in_groupTest     : ${params.grouptest_maf}
-    annotation_in_groupTest : ${params.grouptest_annotation}
-    is_Firth_beta           : ${params.use_firth}
-    pCutoffforFirth         : ${params.firth_cutoff}
-    LOCO                    : ${params.LOCO}
-
-    Other Parameters
-    ==================================================
-    step1_script            : ${params.step1_script}
-    step2_script            : ${params.step2_script}
-    pheno_file_id_col       : ${params.id_col}
-    p_cutoff_summarize      : ${params.p_cutoff_summarize}
-
-    """.stripIndent()
+params.use_firth = false
+params.firth_cutoff = 0.1
+params.burden_only = false
+params.use_weighted_group_test = false
 
 include { SAIGE_PREPROCESSING } from '../processes/saige_preprocessing.nf'
 
@@ -90,6 +38,98 @@ include {
 } from '../processes/saige_helpers.nf'
 
 workflow {
+    log.info([
+        "  NEXTFLOW - DSL2 - SAIGE Gene Burden PheWAS - P I P E L I N E",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "run as", workflow.commandLine),
+        String.format("  %-25s : %s", "run location", launchDir),
+        String.format("  %-25s : %s", "started at", workflow.start),
+        String.format("  %-25s : %s", "python exe", params.my_python),
+        "",
+        "  Cohorts, Phenotypes, and Chromosomes",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "cohort_list", params.cohort_list),
+        String.format("  %-25s : %s", "sex-stratified_cohorts", params.sex_strat_cohort_list),
+        String.format("  %-25s : %s", "bin_pheno_list", params.bin_pheno_list),
+        String.format("  %-25s : %s", "quant_pheno_list", params.quant_pheno_list),
+        String.format("  %-25s : %s", "survival_pheno_list", params.survival_pheno_list),
+        String.format("  %-25s : %s", "sex_specific_pheno_file", params.sex_specific_pheno_file),
+        String.format("  %-25s : %s", "chromosome_list", params.chromosome_list),
+        String.format("  %-25s : %s", "cat_covars", params.cat_covars),
+        String.format("  %-25s : %s", "cont_covars", params.cont_covars),
+        String.format("  %-25s : %s", "sex_strat_cat_covars", params.sex_strat_cat_covars),
+        String.format("  %-25s : %s", "sex_strat_cont_covars", params.sex_strat_cont_covars),
+        String.format("  %-25s : %s", "data_csv", params.data_csv),
+        String.format("  %-25s : %s", "cohort_sets", params.cohort_sets),
+        String.format("  %-25s : %s", "min_bin_cases", params.min_bin_cases),
+        String.format("  %-25s : %s", "min_quant_n", params.min_quant_n),
+        String.format("  %-25s : %s", "min_survival_cases", params.min_survival_cases),
+        "",
+        "  Input File Prefixes",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "use_sparse_GRM", params.use_sparse_GRM),
+        String.format("  %-25s : %s", "step1_sparse_grm", params.step1_sparse_grm),
+        String.format("  %-25s : %s", "step1_sparse_grm_samples", params.step1_sparse_grm_samples),
+        String.format("  %-25s : %s", "exome_plink_prefix", params.exome_plink_prefix),
+        String.format("  %-25s : %s", "step1_plink_prefix", params.step1_plink_prefix),
+        String.format("  %-25s : %s", "step2_plink_prefix", params.step2_plink_prefix),
+        String.format("  %-25s : %s", "group_file_prefix", params.group_file_prefix),
+        String.format("  %-25s : %s", "gene_location_file", params.gene_location_file),
+        String.format("  %-25s : %s", "pheno_descriptions_file", params.pheno_descriptions_file),
+        "",
+        "  SAIGE Step 1 Plink QC Parameters",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "min maf (maf)", params.maf),
+        String.format("  %-25s : %s", "max missingness (geno)", params.geno),
+        String.format("  %-25s : %s", "hardy-weinberg (hwe)", params.hwe),
+        String.format("  %-25s : %s", "max_vars_for_GRM", params.max_vars_for_GRM),
+        String.format("  %-25s : %s", "min_vars_for_GRM", params.min_vars_for_GRM),
+        String.format("  %-25s : %s", "min_rare_vars_for_GRM", params.min_rare_vars_for_GRM),
+        String.format("  %-25s : %s", "pruning_r2_for_GRM", params.pruning_r2_for_GRM),
+        "",
+        "  SAIGE-GENE Parameters",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "minMAF", params.min_maf),
+        String.format("  %-25s : %s", "minMAC", params.min_mac),
+        String.format("  %-25s : %s", "maxMAF_in_groupTest", params.grouptest_maf),
+        String.format("  %-25s : %s", "annotation_in_groupTest", params.grouptest_annotation),
+        String.format("  %-25s : %s", "use_firth", params.use_firth),
+        String.format("  %-25s : %s", "firth_cutoff", params.firth_cutoff),
+        String.format("  %-25s : %s", "burden_only", params.burden_only),
+        String.format("  %-25s : %s", "use_weighted_group_test", params.use_weighted_group_test),
+        String.format("  %-25s : %s", "LOCO", params.LOCO),
+        String.format("  %-25s : %s", "regions_col_names", params.regions_col_names),
+        String.format("  %-25s : %s", "singles_col_names", params.singles_col_names),
+        "",
+        "  Survival Parameters",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "event_time_col", params.event_time_col),
+        String.format("  %-25s : %s", "event_time_bin", params.event_time_bin),
+        "",
+        "  Other Parameters",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "host", params.host),
+        String.format("  %-25s : %s", "GPU", params.GPU),
+        String.format("  %-25s : %s", "step1_script", params.step1_script),
+        String.format("  %-25s : %s", "step2_script", params.step2_script),
+        String.format("  %-25s : %s", "pheno_file_id_col", params.id_col),
+        String.format("  %-25s : %s", "p_cutoff_summarize", params.p_cutoff_summarize),
+    ].join("\n"))
+
+    // Parameter validation
+    if (!params.burden_only && params.use_firth) {
+        error """
+ERROR: Incompatible parameters -- use_firth=true requires burden_only=true.
+  Firth correction is only applied to burden tests and is incompatible with SKAT and SKAT-O tests.
+  To proceed, either:
+    - Set burden_only=true  to run burden-only tests with Firth correction, OR
+    - Set use_firth=false   to run SKAT-O tests without Firth correction.
+"""
+    }
+    if (params.use_weighted_group_test) {
+        log.warn "CAUTION: use_weighted_group_test=true -- effect sizes are not easily interpretable when variants are weighted for the burden test."
+    }
+
     // Get the script name manifest from the helper functions
     script_name_dict = get_script_file_names()
 

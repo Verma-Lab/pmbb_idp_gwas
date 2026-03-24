@@ -136,6 +136,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
 
 * Quantitative Phenotype List
 
+    * `quant_pheno_list` (Type: List OR File Path)
+
     * newline-delimited list of quantitative phenotypes to be included
 
     * Type: List File
@@ -150,6 +152,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
     ```
 
 * SAIGE Step 1 Plink Files
+
+    * `step1_plink_prefix` (Type: Plink Fileset Prefix)
 
     * a hard-call plink set to use for step 1 (usually also exome or genotype files)
 
@@ -166,6 +170,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
 
 * SAIGE Step 2 Plink Files
 
+    * `step2_plink_prefix` (Type: File Path)
+
     * This is a set of chromosome-separated hard-call Plink Files for step 2 of SAIGE. The prefix should be indicated such that the chromosome and bed/bim/fam can be appended for each individual file.
 
     * Type: Plink Set
@@ -181,6 +187,10 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
 
 * Binary Phenotype List
 
+    * `bin_pheno_list` (Type: List)
+
+    * `bin_pheno_list` (Type: List OR File Path)
+
     * newline-delimited list of binary phenotypes to be tested
 
     * Type: List File
@@ -195,6 +205,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
     ```
 
 * SAIGE Step 2 BGEN Files
+
+    * `step2_bgen_prefix` (Type: File Path)
 
     * Type: BGEN/Sample Set
 
@@ -237,6 +249,20 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
 * `cont_covars ` (Type: List)
 
     * Continuous covariates list
+
+* `cat_covars` (Type: List)
+
+    * Categorical covariates list
+### Post-Processing
+
+
+* `p_cutoff_summarize` (Type: Float)
+
+    * P-Value Threshold for Summarizing Results at the End, arbitrary p-value threshold for creating a table of results combined with low p-values 
+
+* `annotate` (Type: Bool (Java: true or false))
+
+    * Whether or not to annotate results with the RSIDs and nearest genes for plotting and summary files.
 ### Pre-Processing
 
 
@@ -255,6 +281,14 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
 * `min_bin_cases` (Type: Float)
 
     * For case-control filtering, the minimum number of BINARY phenotype cases you want to keep. Phenotypes with less than this number per cohort will be dropped (Default: 50 if not specified). 
+
+* `min_quant_n` (Type: Float)
+
+    * For case-control filtering, the minimum number of QUANTITATIVE phenotypes you want to keep. Phenotypes with less than this number per cohort will be dropped (Default: 50 if not specified). 
+
+* `sex_specific_pheno_file` (Type: File Path)
+
+    * A newline-separated list of phenotypes that should only be included in sex-stratified cohorts (e.g., AFR_F but not AFR_ALL).  Can be safely left as null (defaults to an empty List)
 ### SAIGE Step 1
 
 
@@ -265,6 +299,72 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_gwas.nf \
 * `step1_script  ` (Type: File Path)
 
     * Fits the null logistic/linear mixed model using a full or a sparse genetic relationship matrix (GRM). The GRM estimate the genetic relationship between two individuals over a certain number of SNPs
+
+* `step1_plink_prefix` (Type: Plink Fileset Prefix)
+
+    * Step1 exome plink input fileset  - should be all chromosomes together
+
+    * Corresponding Input File: SAIGE Step 1 Plink Files
+
+        * a hard-call plink set to use for step 1 (usually also exome or genotype files)
+
+        * Type: Plink Set
+
+        * Format: plink binary
+
+        * File Header:
+
+
+        ```
+        nfam_100_nindep_0_step1_includeMoreRareVariants_poly_22chr.{bed,bim,fam}
+        ```
+
+* `use_sparse_GRM` (Type: Bool (Java: true or false))
+
+    * Whether to use sparse GRM (or full = false)
+
+* `maf ` (Type: Float)
+
+    * Plink parameters for SAIGE Step 1 Input QC which needs a small set of high-quality variants
+### SAIGE Step 2
+
+
+* `step2_plink_prefix` (Type: File Path)
+
+    * Prefix of File Path used for SAIGE Step2
+
+    * Corresponding Input File: SAIGE Step 2 Plink Files
+
+        * This is a set of chromosome-separated hard-call Plink Files for step 2 of SAIGE. The prefix should be indicated such that the chromosome and bed/bim/fam can be appended for each individual file.
+
+        * Type: Plink Set
+
+        * Format: plink binary
+
+        * File Header:
+
+
+        ```
+        genotype_100markers_2chr.chr1.{bed,bim,fam}
+        ```
+
+* `step2_bgen_prefix` (Type: File Path)
+
+    * Prefix of File Path used for SAIGE Step2 
+
+    * Corresponding Input File: SAIGE Step 2 BGEN Files
+
+        * Type: BGEN/Sample Set
+
+        * Format: bgen
+
+* `ftype` (Type: String)
+
+    * “PLINK” or “BGEN” based on input type for steps 1 & 2 
+
+* `step2_script` (Type: File Path)
+
+    * Performs region or gene-based association tests    
 ### Workflow
 
 
@@ -293,6 +393,25 @@ The width to group event occurrence could be chosen differently based on the nat
 
     * Map of SAIGE Output Column Names to desired Summary Statistics column names
 
+* `bin_pheno_list` (Type: List)
+
+    * Binary phenotype list
+
+    * Corresponding Input File: Binary Phenotype List
+
+        * newline-delimited list of binary phenotypes to be tested
+
+        * Type: List File
+
+        * Format: txt
+
+        * File Header:
+
+
+        ```
+        y_binary
+        ```
+
 * `bin_pheno_list` (Type: List OR File Path)
 
     * file path to list of binary phenotypes
@@ -311,6 +430,29 @@ The width to group event occurrence could be chosen differently based on the nat
         ```
         y_binary
         ```
+
+* `quant_pheno_list` (Type: List OR File Path)
+
+    * file path to list of quantitiative phenotypes
+
+    * Corresponding Input File: Quantitative Phenotype List
+
+        * newline-delimited list of quantitative phenotypes to be included
+
+        * Type: List File
+
+        * Format: txt
+
+        * File Header:
+
+
+        ```
+        y_quantitative
+        ```
+
+* `chromosome_list` (Type: List)
+
+    * This list is used primarily for parallelization of the workflow. List of chromosomes, for testing use smaller chromosomes e.g chromosome_list = ["20", "21", "22"]
 # Configuration and Advanced Workflow Files
 
 ## Example Config File Contents (From Path)

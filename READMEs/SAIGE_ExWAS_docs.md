@@ -136,6 +136,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
 
 * SAIGE Sparse GRM Sample IDs
 
+    * `step1_sparse_grm_samples` (Type: File Path)
+
     * (optional) sample IDs for a sparse relatedness matrix
 
     * Type: List File
@@ -159,6 +161,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
     ```
 
 * Cohort Membership
+
+    * `cohort_sets` (Type: File Path)
 
     * 0/1 table with cohorts as columns and participants as rows - 1 indicates that that row’s participant is a member of that column’s cohort
 
@@ -185,6 +189,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
 
 * SAIGE Step 1 Plink Files
 
+    * `step1_plink_prefix` (Type: Plink Fileset Prefix)
+
     * a hard-call plink set to use for step 1 (usually also exome or genotype files)
 
     * Type: Plink Set
@@ -199,6 +205,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
     ```
 
 * Phenotypes and Covariates
+
+    * `data_csv` (Type: File Path)
 
     * table with participants as rows and all needed phenotypes and covariates as columns
 
@@ -224,6 +232,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
 
 * SAIGE Group Annotation Files
 
+    * `group_file_prefix` (Type: Chr File Prefix)
+
     * text files formatted like this example from the SAIGE github under extdata/input/group_new_chrposa1a2.txt. They should be chromosome-separated, ending with “1.txt”…”22.txt”. The pipeline will fill in “chr.txt” to the end of the prefix you provide
 
     * Type: Data Table
@@ -242,6 +252,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
 
 * Gene Location File
 
+    * `gene_location_file ` (Type: File Path)
+
     * CSV file of 
 
     * Type: Data Table
@@ -259,6 +271,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
 
 * SAIGE Step 2 Plink Files
 
+    * `step2_plink_prefix` (Type: File Path)
+
     * This is a set of chromosome-separated hard-call Plink Files for step 2 of SAIGE. The prefix should be indicated such that the chromosome and bed/bim/fam can be appended for each individual file.
 
     * Type: Plink Set
@@ -273,6 +287,8 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
     ```
 
 * SAIGE Sparse GRM
+
+    * `step1_sparse_grm` (Type: File Path)
 
     * (optional) a sparse relatedness matrix for faster step 1 computation
 
@@ -289,11 +305,30 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
 
 * Sex Specific Phenotype List
 
+    * `sex_specific_pheno_file` (Type: File Path)
+
     * A newline-separated list of phenotypes that should be excluded from non-sex-stratified cohorts (e.g., include in AFR_F or AFR_M but exclude from AFR_ALL). Set to 
 
     * Type: List File
 
     * Format: txt
+
+* SAIGE Exome Plink Files
+
+    * `exome_plink_prefix` (Type: Plink Fileset Prefix)
+
+    * a hard-call plink set of exome data
+
+    * Type: Plink Set
+
+    * Format: plink binary
+
+    * File Header:
+
+
+    ```
+    PMBB-Release-2020-2.0_genetic_exome_GL_norm{.bed,.bim,.fam,.log,.pgen,.psam,.pvar}
+    ```
 ## Output Files for SAIGE_ExWAS
 
 
@@ -494,6 +529,10 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
 * `region_col_names` (Type: Map (Dictionary))
 
     * Default SAIGE Region column names mapped to new ones
+
+* `p_cutoff_summarize` (Type: Float)
+
+    * P-Value Threshold for Summarizing Results at the End, arbitrary p-value threshold for creating a table of results combined with low p-values 
 ### Pre-Processing
 
 
@@ -528,6 +567,47 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
         1a8,0.0162938047248591,0,0.943836210685299,0,0,0,0,0,0,0,0,0,1,1
         1a9,0.147167262428064,0,0.821221195098089,1,0,0,0,0,0,0,0,0,1,0
         ```
+
+* `cohort_sets` (Type: File Path)
+
+    * A binary csv table in which the columns are the cohorts and the rows are the individuals. A 1 means that individual is a member of the column’s cohort, and a 0 means they aren’t.
+
+    * Corresponding Input File: Cohort Membership
+
+        * 0/1 table with cohorts as columns and participants as rows - 1 indicates that that row’s participant is a member of that column’s cohort
+
+        * Type: Data Table
+
+        * Format: csv
+
+        * File Header:
+
+
+        ```
+        IID,POP1,POP2,POP3
+        1a1,1,0,1
+        1a2,1,0,0
+        1a3,0,0,0
+        1a4,1,0,0
+        1a5,1,0,0
+        1a6,1,1,0
+        1a7,0,0,0
+        1a8,1,0,1
+        1a9,0,1,1
+        
+        ```
+
+* `sex_specific_pheno_file` (Type: File Path)
+
+    * A newline-separated list of phenotypes that should only be included in sex-stratified cohorts (e.g., AFR_F but not AFR_ALL).  Can be safely left as null (defaults to an empty List)
+
+    * Corresponding Input File: Sex Specific Phenotype List
+
+        * A newline-separated list of phenotypes that should be excluded from non-sex-stratified cohorts (e.g., include in AFR_F or AFR_M but exclude from AFR_ALL). Set to 
+
+        * Type: List File
+
+        * Format: txt
 ### QC Options
 
 
@@ -544,6 +624,21 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
 * `exome_plink_prefix` (Type: Plink Fileset Prefix)
 
     * Exome plink input files 
+
+    * Corresponding Input File: SAIGE Exome Plink Files
+
+        * a hard-call plink set of exome data
+
+        * Type: Plink Set
+
+        * Format: plink binary
+
+        * File Header:
+
+
+        ```
+        PMBB-Release-2020-2.0_genetic_exome_GL_norm{.bed,.bim,.fam,.log,.pgen,.psam,.pvar}
+        ```
 
 * `group_file_prefix` (Type: Chr File Prefix)
 
@@ -566,12 +661,105 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
         ENSG00000000460 var     1_169795119_C_T 1_169795121_G_C 1_169795123_C_G
         ENSG00000000460 anno    other_missense  other_missense  other_missense
         ```
+
+* `step1_plink_prefix` (Type: Plink Fileset Prefix)
+
+    * Step1 exome plink input fileset  - should be all chromosomes together
+
+    * Corresponding Input File: SAIGE Step 1 Plink Files
+
+        * a hard-call plink set to use for step 1 (usually also exome or genotype files)
+
+        * Type: Plink Set
+
+        * Format: plink binary
+
+        * File Header:
+
+
+        ```
+        nfam_100_nindep_0_step1_includeMoreRareVariants_poly_22chr.{bed,bim,fam}
+        ```
+
+* `hwe` (Type: Float)
+
+    * Plink parameters for SAIGE Step 1 Input QC which needs a small set of high-quality variants
+
+* `step1_sparse_grm_samples` (Type: File Path)
+
+    * List of IDs to use in the sparse GRM 
+
+    * Corresponding Input File: SAIGE Sparse GRM Sample IDs
+
+        * (optional) sample IDs for a sparse relatedness matrix
+
+        * Type: List File
+
+        * Format: txt
+
+        * File Header:
+
+
+        ```
+        1a1
+        1a2
+        1a3
+        1a4
+        1a5
+        1a6
+        1a7
+        1a8
+        1a9
+        1a10
+        ```
+
+* `maf ` (Type: Float)
+
+    * Plink parameters for SAIGE Step 1 Input QC which needs a small set of high-quality variants
+
+* `step1_sparse_grm` (Type: File Path)
+
+    * File Path to precomputed Sparse GRM
+
+    * Corresponding Input File: SAIGE Sparse GRM
+
+        * (optional) a sparse relatedness matrix for faster step 1 computation
+
+        * Type: GRM
+
+        * Format: R sparse matrix
+
+        * File Header:
+
+
+        ```
+        sparseGRM_relatednessCutoff_0.125_2000_randomMarkersUsed.sparseGRM.mtx
+        ```
 ### SAIGE Step 2
 
 
 * `min_mac ` (Type: Float)
 
     * SAIGE-GENE Step 2 Parameters
+
+* `step2_plink_prefix` (Type: File Path)
+
+    * Prefix of File Path used for SAIGE Step2
+
+    * Corresponding Input File: SAIGE Step 2 Plink Files
+
+        * This is a set of chromosome-separated hard-call Plink Files for step 2 of SAIGE. The prefix should be indicated such that the chromosome and bed/bim/fam can be appended for each individual file.
+
+        * Type: Plink Set
+
+        * Format: plink binary
+
+        * File Header:
+
+
+        ```
+        genotype_100markers_2chr.chr1.{bed,bim,fam}
+        ```
 
 * `firth_cutoff` (Type: Float)
 
@@ -580,6 +768,18 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
 * `use_firth` (Type: Bool (R: TRUE or FALSE))
 
     * True to use firth logistic regression
+
+* `grouptest_annotation` (Type: String)
+
+    * Annotations for variants
+
+* `grouptest_maf` (Type: String)
+
+    * MAF cutoffs
+
+* `LOCO` (Type: Bool (R: TRUE or FALSE))
+
+    * Usually a GWAS method 
 ### Workflow
 
 
@@ -590,6 +790,14 @@ nextflow run $TOOLS_DIR/pmbb-nf-toolkit-saige-family/workflows/saige_exwas.nf \
 * `bin_pheno_list` (Type: List)
 
     * Binary phenotype list
+
+* `quant_pheno_list` (Type: List)
+
+    * Quantitative phenotype list
+
+* `cohort_list` (Type: List)
+
+    * List of cohorts usually ancestry stratified and or sex stratified
 # Configuration and Advanced Workflow Files
 
 ## Example Config File Contents (From Path)
@@ -703,8 +911,10 @@ params {
     min_mac = 0.5
     grouptest_maf = "0.0001,0.001,0.01"
     grouptest_annotation = "pLoF,damaging_missense,other_missense,synonymous,pLoF;damaging_missense,pLoF;damaging_missense;other_missense;synonymous"
-    use_firth = "TRUE"
+    use_firth = false
     firth_cutoff = 0.1
+    burden_only = false
+    use_weighted_group_test = false
     LOCO = "FALSE"
 
     // P-Value Threshold for Summarizing Results at the End

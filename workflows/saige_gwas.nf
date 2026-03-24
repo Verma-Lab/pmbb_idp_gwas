@@ -16,59 +16,6 @@ Chris Carson modifying and adding to the work of
 Florian Wuennemann and Lindsay Guare for LPC at Penn
 */
 
-log.info """\
-    NEXTFLOW - DSL2 - SAIGE GWAS - P I P E L I N E
-    ==================================================
-    run as                  : ${workflow.commandLine}
-    run location            : ${launchDir}
-    started at              : ${workflow.start}
-    python exe              : ${params.my_python}
-    bgenix exe              : ${params.my_bgenix}
-    filetype(bgen,plink)    : ${params.ftype}
-
-    Cohorts, Phenotypes, and Chromosomes
-    ==================================================
-    cohort_list             : ${params.cohort_list}
-    bin_pheno_list          : ${params.bin_pheno_list}
-    quant_pheno_list        : ${params.quant_pheno_list}
-    survival_pheno_list     : ${params.survival_pheno_list}
-    chromosome_list         : ${params.chromosome_list}
-    cat_covars              : ${params.cat_covars}
-    cont_covars             : ${params.cont_covars}
-
-    Input File Prefixes
-    ==================================================
-    use_sparse_GRM          : ${params.use_sparse_GRM}
-    step1_plink_prefix      : ${params.step1_plink_prefix}
-    step2_plink_prefix     : ${params.step2_plink_prefix}
-    step2_bgen_prefix      : ${params.step2_bgen_prefix}
-
-    SAIGE Step 1 Plink QC Parameters
-    ==================================================
-    min maf (maf)           : ${params.maf}
-    max missingness (geno)  : ${params.geno}
-    hardy-weinberg (hwe)    : ${params.hwe}
-
-    SAIGE-GENE Parameters
-    ==================================================
-    minMAF                  : ${params.min_maf}
-    minMAC                  : ${params.min_mac}
-    pCutoffforFirth         : ${params.firth_cutoff}
-
-    Other Parameters
-    ==================================================
-    step1_script            : ${params.step1_script}
-    step2_script            : ${params.step2_script}
-    bgen_samplefile         : ${params.bgen_samplefile}
-    pheno_file_id_col       : ${params.id_col}
-    p_cutoff_summarize      : ${params.p_cutoff_summarize}
-    gwas_col_names          : ${params.gwas_col_names}
-    annotate                : ${params.annotate}
-    biofilter_loki          : ${params.biofilter_loki}
-    biofilter_script        : ${params.biofilter_script}
-
-    """.stripIndent()
-
 include { SAIGE_PREPROCESSING } from '../processes/saige_preprocessing.nf'
 
 include { SAIGE_STEP1 } from '../processes/saige_step1.nf'
@@ -89,6 +36,8 @@ include {
     make_saige_gwas_plots
     make_gwas_plots_with_annot
     collect_gwas_plots
+    make_gwas_report_src
+    make_gwas_report
     } from '../processes/saige_visualization.nf'
 
 if (params.annotate) {
@@ -106,6 +55,84 @@ workflow {
 }
 workflow SAIGE_GWAS {
   main:
+    log.info([
+        "  NEXTFLOW - DSL2 - SAIGE GWAS - P I P E L I N E",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "run as", workflow.commandLine),
+        String.format("  %-25s : %s", "run location", launchDir),
+        String.format("  %-25s : %s", "started at", workflow.start),
+        String.format("  %-25s : %s", "python exe", params.my_python),
+        "",
+        "  Cohorts, Phenotypes, and Chromosomes",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "cohort_list", params.cohort_list),
+        String.format("  %-25s : %s", "sex-stratified_cohorts", params.sex_strat_cohort_list),
+        String.format("  %-25s : %s", "bin_pheno_list", params.bin_pheno_list),
+        String.format("  %-25s : %s", "quant_pheno_list", params.quant_pheno_list),
+        String.format("  %-25s : %s", "survival_pheno_list", params.survival_pheno_list),
+        String.format("  %-25s : %s", "sex_specific_pheno_file", params.sex_specific_pheno_file),
+        String.format("  %-25s : %s", "chromosome_list", params.chromosome_list),
+        String.format("  %-25s : %s", "cat_covars", params.cat_covars),
+        String.format("  %-25s : %s", "cont_covars", params.cont_covars),
+        String.format("  %-25s : %s", "sex_strat_cat_covars", params.sex_strat_cat_covars),
+        String.format("  %-25s : %s", "sex_strat_cont_covars", params.sex_strat_cont_covars),
+        String.format("  %-25s : %s", "data_csv", params.data_csv),
+        String.format("  %-25s : %s", "cohort_sets", params.cohort_sets),
+        String.format("  %-25s : %s", "min_bin_cases", params.min_bin_cases),
+        String.format("  %-25s : %s", "min_quant_n", params.min_quant_n),
+        String.format("  %-25s : %s", "min_survival_cases", params.min_survival_cases),
+        "",
+        "  Input File Prefixes",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "ftype", params.ftype),
+        String.format("  %-25s : %s", "use_sparse_GRM", params.use_sparse_GRM),
+        String.format("  %-25s : %s", "step1_sparse_grm", params.step1_sparse_grm),
+        String.format("  %-25s : %s", "step1_sparse_grm_samples", params.step1_sparse_grm_samples),
+        String.format("  %-25s : %s", "step1_plink_prefix", params.step1_plink_prefix),
+        String.format("  %-25s : %s", "step2_plink_prefix", params.step2_plink_prefix),
+        String.format("  %-25s : %s", "step2_bgen_prefix", params.step2_bgen_prefix),
+        String.format("  %-25s : %s", "bgen_samplefile", params.bgen_samplefile),
+        "",
+        "  Chunking Parameters",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "enable_chunking", params.enable_chunking),
+        String.format("  %-25s : %s", "full_chromosome_list", params.full_chromosome_list),
+        String.format("  %-25s : %s", "chunks_list", params.chunks_list),
+        "",
+        "  SAIGE Step 1 Plink QC Parameters",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "min maf (maf)", params.maf),
+        String.format("  %-25s : %s", "max missingness (geno)", params.geno),
+        String.format("  %-25s : %s", "hardy-weinberg (hwe)", params.hwe),
+        String.format("  %-25s : %s", "max_vars_for_GRM", params.max_vars_for_GRM),
+        String.format("  %-25s : %s", "min_vars_for_GRM", params.min_vars_for_GRM),
+        String.format("  %-25s : %s", "min_rare_vars_for_GRM", params.min_rare_vars_for_GRM),
+        String.format("  %-25s : %s", "pruning_r2_for_GRM", params.pruning_r2_for_GRM),
+        "",
+        "  SAIGE GWAS Parameters",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "is_Firth_beta", params.use_firth),
+        String.format("  %-25s : %s", "pCutoffforFirth", params.firth_cutoff),
+        String.format("  %-25s : %s", "LOCO", params.LOCO),
+        String.format("  %-25s : %s", "gwas_col_names", params.gwas_col_names),
+        String.format("  %-25s : %s", "annotate", params.annotate),
+        "",
+        "  Survival Parameters",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "event_time_col", params.event_time_col),
+        String.format("  %-25s : %s", "event_time_bin", params.event_time_bin),
+        "",
+        "  Other Parameters",
+        "  " + "=" * 50,
+        String.format("  %-25s : %s", "host", params.host),
+        String.format("  %-25s : %s", "GPU", params.GPU),
+        String.format("  %-25s : %s", "step1_script", params.step1_script),
+        String.format("  %-25s : %s", "step2_script", params.step2_script),
+        String.format("  %-25s : %s", "pheno_file_id_col", params.id_col),
+        String.format("  %-25s : %s", "p_cutoff_summarize", params.p_cutoff_summarize),
+        String.format("  %-25s : %s", "my_bgenix", params.my_bgenix),
+    ].join("\n"))
+
     // cohort = Channel.fromList(params.cohort_list)
     chromosome = Channel.fromList(params.chromosome_list)
     plink_suffixes_list = ['.bed', '.bim', '.fam']
@@ -118,17 +145,28 @@ workflow SAIGE_GWAS {
     cohort_table = params.cohort_sets
     step1_fam = "${params.step1_plink_prefix}.fam"
 
+    // subsample chunks down to only those chromosomes specified
+    // remove 'chr' prefix if it exists since the chromosome list is just numbers/letters
+    if (params.enable_chunking) {
+        def all_chunks = paramToList(params.chunks_list)
+        filtered_chunks_list = all_chunks
+            .findAll { chunk ->
+                def chrom = chunk.split('_')[0].replace('chr', '')
+                params.chromosome_list.any { it.toString() == chrom }
+            }
+            .collect{ chunk ->
+                chunk.replaceFirst(/^chr/, '')
+            }
+        chunks_list = filtered_chunks_list
+    }
+
+    // figure out which samplefile to use    
     if (ftype == 'PLINK') {
       if (params.enable_chunking) {
-            // If chunking is enabled, use the first chunk in the list
-            chunks_list = paramToList(params.chunks_list)
-            // Filter chunks to only those matching chromosomes in chromosome_list
-            chromosome_set = params.chromosome_list.collect { it.toString() }.toSet()
-            filtered_chunks = chunks_list.findAll { chunk ->
-                def chrom = chunk.split('_')[0]
-                chromosome_set.contains(chrom)
-            }
-            step2_fam = "${params.step2_plink_prefix}${chunks_list[0]}.fam"
+        assert chunks_list.size() > 0 : \
+            "enable_chunking is true but no chunks matched chromosome_list. " +
+            "Check that chunks_list file is readable from launchDir: ${params.chunks_list}"
+        step2_fam = "${params.step2_plink_prefix}${chunks_list[0]}.fam"
         } else {
             // If chunking is disabled, use the first chromosome in the list
             step2_fam = "${params.step2_plink_prefix}${params.chromosome_list[0]}.fam"
@@ -189,7 +227,7 @@ workflow SAIGE_GWAS {
       
         //group them by cohort, phenotype, and full chromosome
         step2_grouped_output = step2_all_output.groupTuple(by: [0,1,2])
-        
+        // from saige_postprocessing.nf MERGE_CHUNKS process
         step2_grouped_output = MERGE_CHUNKS(step2_grouped_output)
         step2_grouped_output = step2_grouped_output.groupTuple(by: [0, 1], size: params.chromosome_list.size())
         // step2_grouped_output.view{"sgo: ${it}"}
@@ -219,30 +257,43 @@ workflow SAIGE_GWAS {
     
     // ANNOTATIONS
     if (params['annotate']) {
-            biofilter_input = gwas_make_biofilter_positions_input(pos_input)
-            bf_input_channel = Channel.of('GWAS').combine(biofilter_input)
-            biofilter_annots = BIOFILTER_POSITIONS(bf_input_channel)
-            plotting_script = script_name_dict['gwas_plots_with_annot']
-            anno_input = filtered_singles_output.combine(biofilter_annots)
-            plots = make_gwas_plots_with_annot(singles_merge_output.combine(biofilter_annots), \
-                                              plotting_script, pheno_table)
-            make_summary_table_with_annot(pos_input, biofilter_annots)
-            gwas_csvs = plots.filter{ it.name =~ /.*manifest.csv/ }.collect()
-            gwas_analysis = "gwas"
-    // gwas_manifest = collect_gwas_plots(gwas_analysis, gwas_csvs)
-    }
-
-    else {
+        biofilter_input = gwas_make_biofilter_positions_input(pos_input)
+        bf_input_channel = Channel.of('GWAS').combine(biofilter_input)
+        biofilter_annots = BIOFILTER_POSITIONS(bf_input_channel)
+        plotting_script = script_name_dict['gwas_plots_with_annot']
+        anno_input = filtered_singles_output.combine(biofilter_annots)
+        plots = make_gwas_plots_with_annot(singles_merge_output.combine(biofilter_annots), \
+                                            plotting_script, pheno_table)
+        gwas_summary = make_summary_table_with_annot(pos_input, biofilter_annots)
+        gwas_csvs = plots.flatten().filter{ it.name.endsWith('manifest.csv') }.collect()
+        gwas_analysis = "gwas"
+        gwas_manifest = collect_gwas_plots(gwas_analysis, gwas_csvs)
+        gwas_pngs = plots.flatten().filter{ it.name =~ /.*png/ }.collect()
+    } else {
         gwas_plots_script = script_name_dict['gwas_plots']
         gwas_plots = make_saige_gwas_plots(singles_merge_output, gwas_plots_script, pheno_table)
-        // filtered_singles_output_list.view { "filtered: ${it }"}
-        make_summary_suggestive_gwas(pos_input)
-        gwas_csvs_2 = gwas_plots.filter{ it.name =~ /.*manifest.csv/ }.collect()
+        gwas_summary = make_summary_suggestive_gwas(pos_input)
+        gwas_csvs_2 = gwas_plots.flatten().filter{ it.name.endsWith('manifest.csv') }.collect()
         gwas_analysis_2 = "gwas"
-    // gwas_manifest_2 = collect_gwas_plots(gwas_analysis_2, gwas_csvs_2)
+        gwas_manifest = collect_gwas_plots(gwas_analysis_2, gwas_csvs_2)
+        gwas_pngs = gwas_plots.flatten().filter{ it.name =~ /.*png/ }.collect()
     }
 
     json_params = dump_params_to_json(params, 'saige_gwas')
+    // collect PNGs for the report src
+    // pheno_pngs = preprocessing_output[6].flatten().collect()
+
+    // assemble the report src/ directory
+    // report_src = make_gwas_report_src(
+    //     gwas_pngs,
+    //     pheno_pngs,
+    //     pheno_table,
+    //     gwas_summary
+    // )
+
+    // generate HTML report
+    // report_script = script_name_dict['gwas_report']
+    // make_gwas_report(report_src, report_script)
 
     emit:
     singles_merge_output

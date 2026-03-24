@@ -26,20 +26,16 @@ Map get_script_file_names() {
     script_names['cohort_setup'] = "${moduleDir}/../scripts/set_up_cohort_directory.py"
     script_names['pheno_table'] = "${moduleDir}/../scripts/make_pheno_summary_table.py"
     script_names['pheno_covar_plots'] = "${moduleDir}/../scripts/make_pheno_covar_summary_plots.py"
-
     script_names['exwas_methods'] = "${moduleDir}/../scripts/generate_exwas_methods.py"
     script_names['exwas_singles_plots'] = "${moduleDir}/../scripts/make_saige_exwas_singles_plots.py"
     script_names['exwas_regions_plots'] = "${moduleDir}/../scripts/make_saige_exwas_regions_plots.py"
-
+    script_names['exwas_report'] = "${moduleDir}/../scripts/make_exwas_report.py"
+    script_names['gwas_report'] = "${moduleDir}/../scripts/generate_gwas_html_report.py"
     script_names['gwas_plots_with_annot'] = "${moduleDir}/../scripts/make_saige_gwas_plots_annotate.py"
     script_names['gwas_plots'] = "${moduleDir}/../scripts/make_saige_gwas_singles_plots.py"
-
     script_names['merge'] = "${moduleDir}/../scripts/merge_and_filter_saige_results.py"
-
     script_names['gb_phewas_plots'] = "${moduleDir}/../scripts/make_saige_gene_burden_phewas_plots_v2.py"
-
     script_names['v_phewas_plots'] = "${moduleDir}/../scripts/make_saige_var_phewas_plots.py"
-
     return script_names
 }
 
